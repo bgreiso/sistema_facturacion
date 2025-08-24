@@ -22,7 +22,14 @@ if ($stmt->num_rows === 0) {
     exit;
 }
 
-// Eliminar el producto
+// Eliminar el producto con información de auditoría
+// Primero actualizamos para registrar quién eliminó el producto
+$update = $conn->prepare("UPDATE products SET updated_by = ?, action_type = 'deleted' WHERE id = ?");
+$update->bind_param("ii", $_SESSION['user_id'], $productId);
+$update->execute();
+$update->close();
+
+// Luego procedemos con la eliminación
 $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
 $stmt->bind_param("i", $productId);
 

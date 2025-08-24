@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($cost_price < 0) $errors[] = "El precio de costo no puede ser negativo";
 
     if (empty($errors)) {
-        // Consulta UPDATE actualizada con tu estructura de tabla
+        // Consulta UPDATE actualizada con campos de auditoría
         $sql_update = "UPDATE products SET 
                         code = ?, 
                         description = ?, 
@@ -70,7 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         stock = ?, 
                         stock_min = ?, 
                         provider_id = ?, 
-                        updated_at = NOW() 
+                        updated_at = NOW(),
+                        updated_by = ?,
+                        action_type = 'updated'
                       WHERE id = ?";
         
         $stmt = $conn->prepare($sql_update);
@@ -78,20 +80,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Error en preparar UPDATE: " . $conn->error);
             $_SESSION['error'] = "Error técnico al preparar la consulta. Detalles: " . $conn->error;
         } else {
-            // Ajustado a tu estructura de tabla (agregado cost_price y cambiado min_stock por stock_min)
+            // Ajustado para incluir el ID del usuario que actualiza
             if ($provider_id === null) {
-                $stmt->bind_param("ssddiiii", 
+                $stmt->bind_param("ssddiiiii", 
                     $code, $description, 
                     $price, $cost_price,
                     $stock, $stock_min, 
+                    $_SESSION['user_id'],
                     $productId
                 );
             } else {
-                $stmt->bind_param("ssddiiii", 
+                $stmt->bind_param("ssddiiiii", 
                     $code, $description, 
                     $price, $cost_price,
                     $stock, $stock_min, 
-                    $provider_id, $productId
+                    $provider_id,
+                    $_SESSION['user_id'],
+                    $productId
                 );
             }
             
@@ -112,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once dirname(__DIR__, 2) . '/includes/header.php';
 ?>
-
 <style>
     .card-module-form {
         border: none;
@@ -235,21 +239,32 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                     
                     <div class="col-md-4">
+                        <label for="measure_unit" class="form-label required-field">Unidad de Medida</label>
+                        <select class="form-select" id="measure_unit" name="measure_unit" required>
+                            <option value="unidad" <?= ($product['measure_unit'] ?? 'unidad') == 'unidad' ? 'selected' : '' ?>>Unidad</option>
+                            <option value="kg" <?= ($product['measure_unit'] ?? 'unidad') == 'kg' ? 'selected' : '' ?>>Kilogramo (kg)</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Por favor seleccione la unidad de medida.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
                         <label for="price" class="form-label required-field">Precio Unitario</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="price" name="price" 
-                                   value="<?= htmlspecialchars($product['price']) ?>" required>
+                                value="<?= htmlspecialchars($product['price']) ?>" required>
                         </div>
                         <div class="invalid-feedback">
                             Por favor ingrese un precio válido (mayor a 0).
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4">
                         <label for="stock" class="form-label required-field">Stock</label>
-                        <input type="number" min="0" class="form-control" id="stock" name="stock" 
-                               value="<?= htmlspecialchars($product['stock']) ?>" required>
+                        <input type="number" step="0.001" min="0" class="form-control" id="stock" name="stock" 
+                            value="<?= htmlspecialchars($product['stock']) ?>" required>
                     </div>
                     
                     <div class="col-md-4">

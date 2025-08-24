@@ -113,6 +113,17 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                             Por favor ingrese una descripción del producto.
                         </div>
                     </div>
+
+                    <div class="col-md-4">
+                        <label for="measure_unit" class="form-label required-field">Unidad de Medida</label>
+                        <select class="form-select" id="measure_unit" name="measure_unit" required>
+                            <option value="unidad" selected>Unidad</option>
+                            <option value="kg">Kilogramo (kg)</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Por favor seleccione la unidad de medida.
+                        </div>
+                    </div>
                     
                     <div class="col-md-4">
                         <label for="price" class="form-label required-field">Precio Unitario</label>
@@ -127,7 +138,7 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                     
                     <div class="col-md-4">
                         <label for="stock" class="form-label">Stock Inicial</label>
-                        <input type="number" min="0" class="form-control" id="stock" name="stock" value="0" required>
+                        <input type="number" step="0.001" min="0" class="form-control" id="stock" name="stock" value="0" required>
                     </div>
                     
                     <div class="col-md-4">

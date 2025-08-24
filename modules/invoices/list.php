@@ -115,6 +115,9 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
             <span style="color: #212529;">Gestión de Facturas</span>
         </h2>
         <div>
+            <a href="cierre_diario.php" class="btn btn-info btn-module me-2">
+                <i class="fas fa-calculator me-2"></i> Cierre Diario
+            </a>
             <a href="create.php" class="btn btn-success btn-module">
                 <i class="fas fa-plus me-2"></i> Nueva Factura
             </a>

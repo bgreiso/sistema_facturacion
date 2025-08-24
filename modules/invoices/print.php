@@ -26,7 +26,7 @@ if (!$invoice) {
 }
 
 // Obtener detalles de la factura
-$details = $conn->prepare("SELECT d.*, p.code as product_code, p.description as product_description 
+$details = $conn->prepare("SELECT d.*, p.code as product_code, p.description as product_description, p.measure_unit 
                           FROM invoice_details d
                           LEFT JOIN products p ON d.product_id = p.id
                           WHERE d.invoice_id = ?");
@@ -104,7 +104,7 @@ Ocumare de la Costa, Zona postal 2112, Aragua
                 <td><?= $detail['product_code'] ?></td>
                 <td><?= $detail['product_description'] ?></td>
                 <td class="text-right">$<?= number_format($detail['unit_price'], 2) ?></td>
-                <td class="text-right"><?= $detail['quantity'] ?></td>
+                <td class="text-end"><?= $detail['measure_unit'] == 'kg' ? number_format($detail['quantity'], 2) . ' kg' : (int)$detail['quantity'] ?></td>
                 <td class="text-right">$<?= number_format($detail['total_price'], 2) ?></td>
             </tr>
             <?php endforeach; ?>

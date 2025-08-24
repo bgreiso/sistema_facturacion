@@ -143,10 +143,11 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                             <?php foreach ($products as $product): ?>
                             <option value="<?= $product['id'] ?>" 
                                 data-code="<?= $product['code'] ?>"
+                                data-description="<?= htmlspecialchars($product['description']) ?>"
                                 data-price="<?= $product['price'] ?>"
                                 data-stock="<?= $product['stock'] ?>">
-                            <?= htmlspecialchars($product['description']) ?> (<?= $product['code'] ?>)
-                            - $<?= number_format($product['price'], 2) ?> - Stock: <?= $product['stock'] ?>
+                                <?= htmlspecialchars($product['description']) ?> (<?= $product['code'] ?>)
+                                - $<?= number_format($product['price'], 2) ?> - Stock: <?= $product['stock'] ?>
                             </option>
                             <?php endforeach; ?>
                         </select>
@@ -157,7 +158,7 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                     <div class="col-md-2">
                         <label for="item_price" class="form-label">Precio Unitario</label>
-                        <input type="text" class="form-control" id="item_price" readonly>
+                        <input type="number" step="0.01" class="form-control" id="item_price" readonly>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button type="button" id="addItem" class="btn btn-primary btn-module">
@@ -227,25 +228,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const invoiceItems = document.getElementById('invoiceItems');
     let itemCounter = 0;
 
-    // Mostrar precio al seleccionar producto (CÓDIGO ORIGINAL FUNCIONAL)
+    // Mostrar precio al seleccionar producto
     productSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption.value) {
             const price = parseFloat(selectedOption.getAttribute('data-price'));
-            priceInput.value = '$' + price.toFixed(2);
-            
-            // Debug: Ver en consola
-            console.log('Producto seleccionado:', {
-                id: selectedOption.value,
-                price: price,
-                stock: selectedOption.getAttribute('data-stock')
-            });
+            priceInput.value = price.toFixed(2);
         } else {
             priceInput.value = '';
         }
     });
 
-    // Agregar producto al detalle (CÓDIGO ORIGINAL FUNCIONAL)
+    // Agregar producto al detalle
     addButton.addEventListener('click', function() {
         const selectedOption = productSelect.options[productSelect.selectedIndex];
         
@@ -256,19 +250,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const productId = selectedOption.value;
         const productCode = selectedOption.getAttribute('data-code');
-        const productDesc = selectedOption.text.split(' - Stock')[0];
+        const productDesc = selectedOption.getAttribute('data-description');
         const unitPrice = parseFloat(selectedOption.getAttribute('data-price'));
         const stock = parseInt(selectedOption.getAttribute('data-stock'));
         const quantity = parseInt(quantityInput.value);
 
         // Validaciones
-        if (isNaN(quantity)) {
-            alert('La cantidad debe ser un número válido');
-            return;
-        }
-
-        if (quantity < 1) {
-            alert('La cantidad debe ser al menos 1');
+        if (isNaN(quantity) || quantity < 1) {
+            alert('La cantidad debe ser un número válido mayor a 0');
             return;
         }
 
@@ -322,19 +311,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Función para actualizar totales (CÓDIGO ORIGINAL FUNCIONAL)
+    // Función para actualizar totales
     function updateTotals() {
         let subtotal = 0;
         const rows = invoiceItems.querySelectorAll('tr');
         
         rows.forEach(row => {
-            const priceText = row.querySelector('td:nth-child(4)').textContent;
-            const quantityText = row.querySelector('td:nth-child(3)').textContent;
+            const priceInput = row.querySelector('input[name^="unit_prices"]');
+            const quantityInput = row.querySelector('input[name^="quantities"]');
             
-            const price = parseFloat(priceText.replace('$', '').replace(',', ''));
-            const quantity = parseInt(quantityText);
-            
-            subtotal += price * quantity;
+            if (priceInput && quantityInput) {
+                const price = parseFloat(priceInput.value);
+                const quantity = parseInt(quantityInput.value);
+                subtotal += price * quantity;
+            }
         });
 
         const tax = subtotal * 0.16; // IVA 16%

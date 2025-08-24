@@ -27,7 +27,7 @@ if (!$invoice) {
 }
 
 // Obtener detalles de la factura
-$details = $conn->prepare("SELECT d.*, p.code as product_code, p.description as product_description 
+$details = $conn->prepare("SELECT d.*, p.code as product_code, p.description as product_description, p.measure_unit 
                           FROM invoice_details d
                           LEFT JOIN products p ON d.product_id = p.id
                           WHERE d.invoice_id = ?");
@@ -181,7 +181,7 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                             <td><?= htmlspecialchars($detail['product_code']) ?></td>
                             <td><?= htmlspecialchars($detail['product_description']) ?></td>
                             <td class="text-end">$<?= number_format($detail['unit_price'], 2) ?></td>
-                            <td class="text-end"><?= $detail['quantity'] ?></td>
+                            <td class="text-end"><?= $detail['measure_unit'] == 'kg' ? number_format($detail['quantity'], 2) . ' kg' : (int)$detail['quantity'] ?></td>
                             <td class="text-end">$<?= number_format($detail['total_price'], 2) ?></td>
                         </tr>
                         <?php endforeach; ?>

@@ -61,11 +61,80 @@ if (!isset($conn) || $conn->connect_error) {
         }
     }
 
-    // Obtener actividad reciente
+    // Obtener actividad reciente con información del usuario
+    // Verificar si las tablas tienen campos de auditoría
+    $check_invoices_audit = $conn->query("SHOW COLUMNS FROM invoices LIKE 'user_id'");
+    $has_invoices_audit = ($check_invoices_audit->num_rows > 0);
+    
+    $check_products_audit = $conn->query("SHOW COLUMNS FROM products LIKE 'updated_by'");
+    $has_products_audit = ($check_products_audit->num_rows > 0);
+    
+    $check_clients_audit = $conn->query("SHOW COLUMNS FROM clients LIKE 'created_by'");
+    $has_clients_audit = ($check_clients_audit->num_rows > 0);
+
+    // Consultas según la disponibilidad de campos de auditoría
+    if ($has_invoices_audit) {
+        $invoice_query = "SELECT i.invoice_number, i.created_at, u.username as user_name 
+                         FROM invoices i 
+                         LEFT JOIN users u ON i.user_id = u.id 
+                         ORDER BY i.created_at DESC LIMIT 3";
+    } else {
+        $invoice_query = "SELECT invoice_number, created_at, 'Sistema' as user_name 
+                         FROM invoices 
+                         ORDER BY created_at DESC LIMIT 3";
+    }
+    
+    // Consulta mejorada para productos - muestra tanto creaciones como actualizaciones
+    if ($has_products_audit) {
+        $product_query = "SELECT 
+                            p.name, 
+                            COALESCE(p.updated_at, p.created_at) as action_date,
+                            COALESCE(u2.username, u1.username, 'Sistema') as user_name,
+                            CASE 
+                                WHEN p.updated_at IS NOT NULL THEN 'updated' 
+                                ELSE 'created' 
+                            END as action_type
+                         FROM products p 
+                         LEFT JOIN users u1 ON p.created_by = u1.id 
+                         LEFT JOIN users u2 ON p.updated_by = u2.id 
+                         ORDER BY action_date DESC LIMIT 5";
+    } else {
+        $product_query = "SELECT 
+                            name, 
+                            COALESCE(updated_at, created_at) as action_date,
+                            'Sistema' as user_name,
+                            CASE 
+                                WHEN updated_at IS NOT NULL THEN 'updated' 
+                                ELSE 'created' 
+                            END as action_type
+                         FROM products 
+                         ORDER BY action_date DESC LIMIT 5";
+    }
+    
+    // Consulta mejorada para clientes
+    if ($has_clients_audit) {
+        $client_query = "SELECT 
+                            c.name, 
+                            c.created_at, 
+                            COALESCE(u.username, 'Sistema') as user_name,
+                            'created' as action_type
+                         FROM clients c 
+                         LEFT JOIN users u ON c.created_by = u.id 
+                         ORDER BY c.created_at DESC LIMIT 3";
+    } else {
+        $client_query = "SELECT 
+                            name, 
+                            created_at, 
+                            'Sistema' as user_name,
+                            'created' as action_type
+                         FROM clients 
+                         ORDER BY created_at DESC LIMIT 3";
+    }
+
     $recent_queries = [
-        'invoices' => "SELECT invoice_number, created_at FROM invoices ORDER BY created_at DESC LIMIT 3",
-        'products' => "SELECT name, updated_at FROM products ORDER BY updated_at DESC LIMIT 2",
-        'clients' => "SELECT name, created_at FROM clients ORDER BY created_at DESC LIMIT 1"
+        'invoices' => $invoice_query,
+        'products' => $product_query,
+        'clients' => $client_query
     ];
 
     foreach ($recent_queries as $key => $sql) {
@@ -177,6 +246,15 @@ if (!isset($conn) || $conn->connect_error) {
     .recent-activity-time {
         font-size: 0.8rem;
         color: #6c757d;
+    }
+    
+    .user-badge {
+        background-color: #f0f0f0;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: #555;
+        margin-left: 5px;
     }
 </style>
 
@@ -301,25 +379,38 @@ if (!isset($conn) || $conn->connect_error) {
                 <div class="mt-3">
                     <?php foreach($recent_invoices as $invoice): ?>
                         <div class="recent-activity-item">
-                            <p class="mb-1">Nueva factura creada <strong>#<?= htmlspecialchars($invoice['invoice_number']) ?></strong></p>
+                            <p class="mb-1">
+                                Nueva factura creada <strong>#<?= htmlspecialchars($invoice['invoice_number']) ?></strong>
+                                <span class="user-badge">por <?= htmlspecialchars($invoice['user_name']) ?></span>
+                            </p>
                             <p class="recent-activity-time">
                                 <?= date('d M Y, H:i', strtotime($invoice['created_at'])) ?>
                             </p>
                         </div>
                     <?php endforeach; ?>
                     
-                    <?php foreach($recent_products as $product): ?>
+                    <?php foreach($recent_products as $product): 
+                        $actionText = ($product['action_type'] == 'updated') ? 'actualizado' : 'agregado';
+                    ?>
                         <div class="recent-activity-item">
-                            <p class="mb-1">Producto <strong>"<?= htmlspecialchars($product['name']) ?>"</strong> actualizado</p>
+                            <p class="mb-1">
+                                Producto <strong>"<?= htmlspecialchars($product['name']) ?>"</strong> <?= $actionText ?>
+                                <span class="user-badge">por <?= htmlspecialchars($product['user_name']) ?></span>
+                            </p>
                             <p class="recent-activity-time">
-                                <?= date('d M Y, H:i', strtotime($product['updated_at'])) ?>
+                                <?= date('d M Y, H:i', strtotime($product['action_date'])) ?>
                             </p>
                         </div>
                     <?php endforeach; ?>
                     
-                    <?php foreach($recent_clients as $client): ?>
+                    <?php foreach($recent_clients as $client): 
+                        $actionText = ($client['action_type'] == 'updated') ? 'actualizado' : 'registrado';
+                    ?>
                         <div class="recent-activity-item">
-                            <p class="mb-1">Nuevo cliente registrado: <strong><?= htmlspecialchars($client['name']) ?></strong></p>
+                            <p class="mb-1">
+                                Cliente <strong><?= htmlspecialchars($client['name']) ?></strong> <?= $actionText ?>
+                                <span class="user-badge">por <?= htmlspecialchars($client['user_name']) ?></span>
+                            </p>
                             <p class="recent-activity-time">
                                 <?= date('d M Y, H:i', strtotime($client['created_at'])) ?>
                             </p>

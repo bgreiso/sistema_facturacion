@@ -39,9 +39,9 @@ if (!empty($errors)) {
     exit;
 }
 
-// Insertar en la base de datos
-$stmt = $conn->prepare("INSERT INTO providers (name, ruc, phone, email, address) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("sssss", $name, $ruc, $phone, $email, $address);
+// Insertar en la base de datos con información de auditoría
+$stmt = $conn->prepare("INSERT INTO providers (name, ruc, phone, email, address, created_by, updated_by, action_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'created')");
+$stmt->bind_param("sssssii", $name, $ruc, $phone, $email, $address, $_SESSION['user_id'], $_SESSION['user_id']);
 
 if ($stmt->execute()) {
     $_SESSION['success'] = "Proveedor agregado correctamente";

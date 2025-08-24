@@ -184,9 +184,9 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                                     <span class="fw-bold">$<?= number_format($product['price'], 2) ?></span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="stock-badge bg-<?= $product['stock'] > ($product['stock_min'] ?? 10) ? 'success' : ($product['stock'] > 0 ? 'warning' : 'danger') ?>">
-                                        <?= $product['stock'] ?>
-                                        <?php if($product['stock'] <= ($product['stock_min'] ?? 10) && $product['stock'] > 0): ?>
+                                    <span class="stock-badge bg-<?= $product['stock'] > ($product['min_stock'] ?? 10) ? 'success' : ($product['stock'] > 0 ? 'warning' : 'danger') ?>">
+                                        <?= $product['measure_unit'] == 'kg' ? number_format($product['stock'], 2) . ' kg' : (int)$product['stock'] ?>
+                                        <?php if($product['stock'] <= ($product['min_stock'] ?? 10) && $product['stock'] > 0): ?>
                                             <i class="fas fa-exclamation-circle ms-1"></i>
                                         <?php endif; ?>
                                     </span>
