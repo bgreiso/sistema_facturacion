@@ -1,0 +1,21 @@
+C:\xampp\htdocs\facturacion\
+├── assets\
+│   ├── css\
+│   │   └── styles.css
+│   └── js\
+│       └── scripts.js
+├── includes\
+│   ├── config.php
+│   ├── functions.php
+│   ├── header.php
+│   └── footer.php
+├── modules\
+│   ├── auth\
+│   │   ├── login.php
+│   │   ├── logout.php
+│   │   └── process_login.php
+│   ├── clients\
+│   ├── invoices\
+│   └── products\
+├── index.php
+└── dashboard.php

@@ -1,0 +1,106 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card-link .card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Estilo para el botón de logout */
+.navbar .nav-link.logout {
+    color: #ff6b6b;
+}
+
+/* Estilo para las tarjetas de dashboard */
+.dashboard-card {
+    cursor: pointer;
+    height: 100%;
+}
+
+.dashboard-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos personalizados para el login */
+body {
+    background-color: #f8f9fa;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.card {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    padding: 10px;
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
+
+/* Estilos generales */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Navbar personalizada */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+
+/* Tarjetas */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+/* Tablas */
+.table {
+    background-color: white;
+}
+
+/* Botones */
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    padding: 8px 16px;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+/* Formularios */
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+
+/* Alertas */
+.alert {
+    border-radius: 4px;
+}
