@@ -5,32 +5,51 @@ requireAuth();
 // Verificar permisos (solo administradores y cajeros)
 if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'cashier') {
     $_SESSION['error'] = "No tiene permisos para acceder a esta función";
-    header('Location: list.php');
+    header('Location: list.php'); // O a la página principal del módulo
     exit;
 }
 
-// Obtener la fecha para el reporte (por defecto hoy)
-$report_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+// --- NUEVO: Obtener la lista de cajeros y administradores para el filtro ---
+$cashiers_sql = "SELECT id, username FROM users WHERE role IN ('admin', 'cashier') ORDER BY username ASC";
+$cashiers = $conn->query($cashiers_sql)->fetch_all(MYSQLI_ASSOC);
 
-// Consulta para obtener las facturas del día
+// --- MODIFICADO: Obtener valores de los filtros ---
+$report_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+$cashier_id = isset($_GET['cashier_id']) && !empty($_GET['cashier_id']) ? (int)$_GET['cashier_id'] : null;
+
+// --- MODIFICADO: Consulta principal para adaptarla al filtro de cajero ---
 $sql = "SELECT i.*, c.name as client_name, c.ruc as client_ruc, 
                u.username as cashier_name
         FROM invoices i
         LEFT JOIN clients c ON i.client_id = c.id
         LEFT JOIN users u ON i.user_id = u.id
-        WHERE i.date = ?
-        ORDER BY i.created_at ASC";
+        WHERE i.date = ?";
+
+$params = [$report_date];
+$types = "s";
+
+// Añadir el filtro de cajero si se ha seleccionado uno
+if ($cashier_id) {
+    $sql .= " AND i.user_id = ?";
+    $params[] = $cashier_id;
+    $types .= "i";
+}
+
+$sql .= " ORDER BY i.created_at ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $report_date);
+// Usar el operador "splat" (...) para vincular un número dinámico de parámetros
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $invoices = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Calcular totales
+
+// --- Lógica de cálculo de totales (sin cambios) ---
 $total_facturas = count($invoices);
 $total_ventas = 0;
 $total_iva = 0;
 $total_subtotal = 0;
+$selected_cashier_name = 'Todos';
 
 foreach ($invoices as $invoice) {
     $total_ventas += $invoice['total'];
@@ -38,10 +57,22 @@ foreach ($invoices as $invoice) {
     $total_subtotal += $invoice['subtotal'];
 }
 
+// --- NUEVO: Obtener el nombre del cajero seleccionado para mostrarlo en el título ---
+if ($cashier_id) {
+    foreach ($cashiers as $cashier) {
+        if ($cashier['id'] == $cashier_id) {
+            $selected_cashier_name = htmlspecialchars($cashier['username']);
+            break;
+        }
+    }
+}
+
+
 require_once dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 
 <style>
+    /* Estilos existentes (sin cambios) */
     .card-module {
         border: none;
         border-radius: 12px;
@@ -49,35 +80,25 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
         overflow: hidden;
         border-top: 4px solid #4cc9f0;
     }
-    
     .btn-module {
         border-radius: 50px;
         padding: 8px 20px;
         font-weight: 500;
         transition: all 0.3s;
     }
-    
     .btn-module:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    
-    .table-module {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
     .table-module thead th {
         border-bottom: 2px solid #e9ecef;
         background-color: #f8f9fa;
         font-weight: 600;
         color: #495057;
     }
-    
     .table-module tbody tr:hover {
         background-color: rgba(76, 201, 240, 0.05);
     }
-    
     .summary-card {
         background: linear-gradient(135deg, #4cc9f0, #4895ef);
         color: white;
@@ -85,87 +106,93 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
         padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
-    
     .summary-value {
         font-size: 1.5rem;
         font-weight: 700;
     }
-    
     @media print {
-        .no-print {
-            display: none !important;
-        }
-        .summary-card {
-            background: #4cc9f0 !important;
-            -webkit-print-color-adjust: exact;
-        }
+        .no-print { display: none !important; }
+        .summary-card { background: #4cc9f0 !important; -webkit-print-color-adjust: exact; }
+        .card, .card-body { border: none !important; box-shadow: none !important; }
+        .container-fluid { padding: 0 !important; }
     }
 </style>
 
 <div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mt-4"><i class="fas fa-calculator me-2 text-primary"></i>Cierre Diario</h1>
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h1 class="mb-0"><i class="fas fa-calculator me-2 text-primary"></i>Cierre Diario</h1>
         <a href="list.php" class="btn btn-outline-secondary btn-module no-print">
-            <i class="fas fa-arrow-left me-1"></i> Volver al Listado
+            <i class="fas fa-arrow-left me-1"></i> Volver
         </a>
     </div>
 
-    <div class="card card-module mb-4">
-        <div class="card-header card-header-module">
-            <h5 class="card-title mb-0"><i class="fas fa-calendar-alt me-2 text-primary"></i>Seleccionar Fecha</h5>
+    <div class="card card-module mb-4 no-print">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros del Reporte</h5>
         </div>
-        <div class="card-body no-print">
+        <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label for="date" class="form-label">Fecha del Reporte</label>
                     <input type="date" class="form-control" id="date" name="date" 
-                           value="<?= $report_date ?>" required>
+                           value="<?= htmlspecialchars($report_date) ?>" required>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary btn-module">
-                        <i class="fas fa-search me-1"></i> Buscar
+                
+                <div class="col-md-4">
+                    <label for="cashier_id" class="form-label">Cajero</label>
+                    <select class="form-select" id="cashier_id" name="cashier_id">
+                        <option value="">-- Todos los Cajeros --</option>
+                        <?php foreach ($cashiers as $cashier): ?>
+                            <option value="<?= $cashier['id'] ?>" <?= ($cashier_id == $cashier['id'] ? 'selected' : '') ?>>
+                                <?= htmlspecialchars($cashier['username']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary btn-module w-100">
+                        <i class="fas fa-search me-2"></i> Generar Reporte
                     </button>
                 </div>
             </form>
         </div>
     </div>
-
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            <?= $_SESSION['error'] ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <?php unset($_SESSION['error']); ?>
-    <?php endif; ?>
-
+    
     <?php if ($report_date): ?>
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="summary-card text-center">
+        <div class="col-md-3">
+            <div class="summary-card text-center h-100">
                 <h6><i class="fas fa-receipt me-1"></i> Total Facturas</h6>
                 <div class="summary-value"><?= $total_facturas ?></div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="summary-card text-center">
+        <div class="col-md-3">
+            <div class="summary-card text-center h-100">
                 <h6><i class="fas fa-money-bill-wave me-1"></i> Total Ventas</h6>
                 <div class="summary-value">$<?= number_format($total_ventas, 2) ?></div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="summary-card text-center">
+        <div class="col-md-3">
+            <div class="summary-card text-center h-100">
                 <h6><i class="fas fa-calendar-day me-1"></i> Fecha</h6>
                 <div class="summary-value"><?= date('d/m/Y', strtotime($report_date)) ?></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card text-center h-100" style="background: linear-gradient(135deg, #f7b801, #f18701);">
+                <h6><i class="fas fa-user-check me-1"></i> Cajero</h6>
+                <div class="summary-value"><?= $selected_cashier_name ?></div>
             </div>
         </div>
     </div>
 
     <div class="card card-module mb-4">
-        <div class="card-header card-header-module d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
                 <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
-                Facturas del <?= date('d/m/Y', strtotime($report_date)) ?>
+                Facturas del <?= date('d/m/Y', strtotime($report_date)) ?> 
+                <span class="text-muted fs-6">| Cajero: <?= $selected_cashier_name ?></span>
             </h5>
             <div class="no-print">
                 <button onclick="window.print()" class="btn btn-sm btn-outline-primary me-2">
@@ -175,14 +202,14 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-module">
+                <table class="table table-hover table-module">
                     <thead>
                         <tr>
                             <th>N° Factura</th>
                             <th>Cliente</th>
                             <th>RIF/Cédula</th>
                             <th class="text-end">Subtotal</th>
-                            <th class="text-end">IVA</th>
+                            <th class="text-end">IVA (16%)</th>
                             <th class="text-end">Total</th>
                             <th class="text-center">Hora</th>
                             <th class="text-center">Cajero</th>
@@ -192,27 +219,27 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                         <?php if (empty($invoices)): ?>
                             <tr>
                                 <td colspan="8" class="text-center py-4 text-muted">
-                                    <i class="fas fa-info-circle me-2"></i> No hay facturas para esta fecha
+                                    <i class="fas fa-info-circle me-2"></i> No se encontraron facturas para los filtros seleccionados
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($invoices as $invoice): ?>
                             <tr>
-                                <td><?= $invoice['invoice_number'] ?></td>
+                                <td><?= htmlspecialchars($invoice['invoice_number']) ?></td>
                                 <td><?= htmlspecialchars($invoice['client_name']) ?></td>
-                                <td><?= $invoice['client_ruc'] ?></td>
+                                <td><?= htmlspecialchars($invoice['client_ruc']) ?></td>
                                 <td class="text-end">$<?= number_format($invoice['subtotal'], 2) ?></td>
                                 <td class="text-end">$<?= number_format($invoice['tax'], 2) ?></td>
-                                <td class="text-end">$<?= number_format($invoice['total'], 2) ?></td>
-                                <td class="text-center"><?= date('H:i', strtotime($invoice['created_at'])) ?></td>
-                                <td class="text-center"><?= $invoice['cashier_name'] ?></td>
+                                <td class="text-end"><strong>$<?= number_format($invoice['total'], 2) ?></strong></td>
+                                <td class="text-center"><?= date('h:i A', strtotime($invoice['created_at'])) ?></td>
+                                <td class="text-center"><?= htmlspecialchars($invoice['cashier_name']) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                     <tfoot>
-                        <tr class="table-active">
-                            <th colspan="3" class="text-end">TOTALES:</th>
+                        <tr class="table-light fw-bold">
+                            <th colspan="3" class="text-end">TOTALES FILTRADOS:</th>
                             <th class="text-end">$<?= number_format($total_subtotal, 2) ?></th>
                             <th class="text-end">$<?= number_format($total_iva, 2) ?></th>
                             <th class="text-end">$<?= number_format($total_ventas, 2) ?></th>
@@ -220,16 +247,6 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="row no-print">
-        <div class="col-12">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Resumen del día:</strong> Se emitieron <?= $total_facturas ?> facturas con un total de ventas de $<?= number_format($total_ventas, 2) ?>.
-                El IVA recaudado fue de $<?= number_format($total_iva, 2) ?>.
             </div>
         </div>
     </div>

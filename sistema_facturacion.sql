@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-08-2025 a las 00:03:14
+-- Tiempo de generación: 31-08-2025 a las 03:05:38
 -- Versión del servidor: 10.1.38-MariaDB
 -- Versión de PHP: 7.3.2
 
@@ -47,7 +47,10 @@ CREATE TABLE `clients` (
 --
 
 INSERT INTO `clients` (`id`, `name`, `ruc`, `address`, `phone`, `email`, `created_at`, `updated_at`, `created_by`, `updated_by`, `action_type`) VALUES
-(1, 'Cliente Ejemplo', '98765432109', 'Calle Secundaria 456', '963852741', 'cliente@ejemplo.com', '2025-07-24 20:03:58', '2025-08-24 19:59:22', 1, 1, 'created');
+(1, 'Cliente Ejemplo', '98765432109', 'Calle Secundaria 456', '963852741', 'cliente@ejemplo.com', '2025-07-24 20:03:58', '2025-08-24 19:59:22', 1, 1, 'created'),
+(3, 'Juan PÃ©rez', 'V-30073550', '', '0412-3456653', 'JUANPEREZ@GMAIL.COM', '2025-08-31 00:34:25', NULL, 5, 5, 'created'),
+(4, 'Roberto Gomez', 'V-21273044', '', '0424-3678864', 'robetgod@gmail.com', '2025-08-31 00:34:58', NULL, 5, 5, 'created'),
+(5, 'Mauricio MejÃ­as', 'V-20099120', '', '0424-3129088', 'Maumejias@gmail.com', '2025-08-31 00:36:29', NULL, 5, 5, 'created');
 
 -- --------------------------------------------------------
 
@@ -161,8 +164,8 @@ INSERT INTO `products` (`id`, `code`, `description`, `price`, `cost_price`, `sto
 (6, 'PROD-002', 'ARROZ MARY', '2.00', NULL, '46.000', 5, 2, '2025-07-25 02:24:13', '2025-08-24 22:01:29', NULL, 5, 'updated', 'unidad', '5.000'),
 (7, 'PROD-003', 'HARINA KALY', '1.50', NULL, '48.000', 5, 2, '2025-07-25 02:24:35', '2025-07-25 02:53:00', NULL, NULL, 'created', 'unidad', '5.000'),
 (13, 'PROD-004', 'VASOS PLASTICOS', '0.50', '0.00', '7.000', 5, 2, '2025-08-24 20:30:46', '2025-08-24 21:08:15', 5, 5, 'updated', 'unidad', '5.000'),
-(14, 'PROD-005', 'SARDINA', '0.70', '0.00', '65.000', 5, 1, '2025-08-24 20:57:56', '2025-08-24 21:51:38', 5, 5, 'updated', 'unidad', '5.000'),
-(15, 'PROD-006', 'MARISCOS', '5.00', '0.00', '43.000', 5, 1, '2025-08-24 21:35:24', '2025-08-24 21:49:19', 5, 5, 'updated', 'kg', '5.000');
+(15, 'PROD-006', 'MARISCOS', '5.00', '0.00', '43.000', 5, 1, '2025-08-24 21:35:24', '2025-08-24 21:49:19', 5, 5, 'updated', 'kg', '5.000'),
+(16, 'PROD-007', 'SARDINA', '0.70', NULL, '50.000', 5, 5, '2025-08-31 00:11:36', NULL, 5, 5, 'created', 'kg', '5.000');
 
 -- --------------------------------------------------------
 
@@ -190,7 +193,11 @@ CREATE TABLE `providers` (
 
 INSERT INTO `providers` (`id`, `name`, `ruc`, `address`, `phone`, `email`, `created_at`, `updated_at`, `created_by`, `updated_by`, `action_type`) VALUES
 (1, 'Proveedor Ejemplo', '12345678901', 'Av. Principal 123', '987654321', 'proveedor@ejemplo.com', '2025-07-24 20:03:58', '2025-08-24 19:59:22', 1, 1, 'created'),
-(2, 'PESCADERÃA LUSAMAR C.A', 'J-45677221-5', 'Ocumare', '04128850522', 'PLUSAMAR15@GMAIL.COM', '2025-07-24 21:32:09', '2025-08-24 19:59:22', 1, 1, 'created');
+(2, 'PESCADERÃA LUSAMAR C.A', 'J-45677221-5', 'Ocumare', '04128850522', 'PLUSAMAR15@GMAIL.COM', '2025-07-24 21:32:09', '2025-08-24 19:59:22', 1, 1, 'created'),
+(4, 'Grupo Lamar, C.A.', 'J-08016155-6', '', '0412-2578529', 'jrincon@grupo-lamar.com', '2025-08-31 00:01:38', NULL, 5, 5, 'created'),
+(5, 'Distribuidora Global Fish', 'J-29997663-7', '', '0412-4811767', 'globalfish2022@gmail.com', '2025-08-31 00:02:30', NULL, 5, 5, 'created'),
+(6, 'Pescaven, C.A.', 'J-12345578-9', '', '0293-9350237', 'pescavenvnzla@gmail.com', '2025-08-31 00:03:05', NULL, 5, 5, 'created'),
+(8, 'Distribuidora Facaven, C.A.', 'J-40093113-4', '', '+58 212-9511947', 'info@dfacaven.com', '2025-08-31 00:09:52', NULL, 5, 5, 'created');
 
 -- --------------------------------------------------------
 
@@ -280,7 +287,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de la tabla `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `invoices`
@@ -298,13 +305,13 @@ ALTER TABLE `invoice_details`
 -- AUTO_INCREMENT de la tabla `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `providers`
 --
 ALTER TABLE `providers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `users`

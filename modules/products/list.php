@@ -113,6 +113,7 @@ require_once dirname(__DIR__, 2) . '/includes/header.php';
         min-width: 50px;
         text-align: center;
         display: inline-block;
+        color: white;
     }
 </style>
 

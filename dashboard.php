@@ -87,7 +87,7 @@ if (!isset($conn) || $conn->connect_error) {
     // Consulta mejorada para productos - muestra tanto creaciones como actualizaciones
     if ($has_products_audit) {
         $product_query = "SELECT 
-                            p.name, 
+                            p.description as name, 
                             COALESCE(p.updated_at, p.created_at) as action_date,
                             COALESCE(u2.username, u1.username, 'Sistema') as user_name,
                             CASE 
@@ -97,7 +97,7 @@ if (!isset($conn) || $conn->connect_error) {
                          FROM products p 
                          LEFT JOIN users u1 ON p.created_by = u1.id 
                          LEFT JOIN users u2 ON p.updated_by = u2.id 
-                         ORDER BY action_date DESC LIMIT 5";
+                         ORDER BY action_date DESC LIMIT 3";
     } else {
         $product_query = "SELECT 
                             name, 
@@ -108,7 +108,7 @@ if (!isset($conn) || $conn->connect_error) {
                                 ELSE 'created' 
                             END as action_type
                          FROM products 
-                         ORDER BY action_date DESC LIMIT 5";
+                         ORDER BY action_date DESC LIMIT 3";
     }
     
     // Consulta mejorada para clientes

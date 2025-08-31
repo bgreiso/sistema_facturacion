@@ -151,8 +151,12 @@
                                 <?= htmlspecialchars($_SESSION['username']) ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i> Mi perfil</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Configuración</a></li>
+                            <a class="dropdown-item" href="<?= BASE_URL ?>/modules/auth/profile.php">
+                                    <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                                </a>
+                                <a class="dropdown-item" href="<?= BASE_URL ?>/modules/auth/settings.php">
+                                    <i class="fas fa-cog me-2"></i> Configuración
+                                </a>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="<?= BASE_URL ?>/modules/auth/logout.php">
